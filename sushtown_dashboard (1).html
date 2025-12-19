@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sush Town Restaurant Operations Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            padding: 20px;
+        }
+        .dashboard { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .header .subtitle { font-size: 14px; color: #86868b; }
+        .header .last-updated { font-size: 12px; color: #86868b; margin-top: 12px; }
+        .hero-banner {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            padding: 20px 32px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            color: white;
+        }
+        .hero-metric { text-align: center; }
+        .hero-metric .value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .hero-metric .label { font-size: 13px; opacity: 0.9; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .kpi-card .value { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .kpi-card .value.green { color: #30d158; }
+        .kpi-card .label { font-size: 13px; color: #86868b; }
+        .kpi-card .subtext { font-size: 11px; color: #86868b; }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e5e7;
+        }
+        .activity-feed { max-height: 600px; overflow-y: auto; }
+        .activity-item {
+            padding: 12px;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 12px;
+        }
+        .activity-time { color: #86868b; font-size: 11px; margin-bottom: 4px; }
+        .res-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .res-badge.confirmed { background: #d1f4e0; color: #0d7a3f; }
+        .res-badge.vip { background: #fff3cd; color: #856404; }
+        .bar-chart {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            height: 200px;
+            align-items: flex-end;
+        }
+        .bar {
+            flex: 1;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .system-health-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 13px;
+        }
+        .system-health-label { color: #86868b; }
+        .system-health-value { font-weight: 600; }
+        .system-health-value.green { color: #30d158; }
+        .redacted {
+            background: #000;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f5f5f7;
+            font-size: 12px;
+            font-weight: 600;
+            color: #86868b;
+        }
+        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f5f5f7; }
+        .status-pass { color: #30d158; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Sush Town Restaurant Operations Dashboard</h1>
+            <div class="subtitle">AI-Powered Reservation Management & Customer Engagement</div>
+            <div class="last-updated">Last Updated: <span id="lastUpdated"></span></div>
+        </div>
+        
+        <div class="hero-banner">
+            <div class="hero-metric">
+                <div class="value">+260%</div>
+                <div class="label">Customer Growth Rate</div>
+            </div>
+            <div class="hero-metric">
+                <div class="value">$127.40</div>
+                <div class="label">Revenue Per Reservation</div>
+            </div>
+            <div class="hero-metric">
+                <div class="value">64.3 hrs</div>
+                <div class="label">Staff Hours Saved (Monthly)</div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="value">3,241</div>
+                <div class="label">Total Reservations</div>
+                <div class="subtext">Past 6 months ↑</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">96.7% ✓</div>
+                <div class="label">Booking Success Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">0.8s ✓</div>
+                <div class="label">Avg Response Time</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">99.4% ✓</div>
+                <div class="label">SMS Delivery Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">2.1% ✓</div>
+                <div class="label">No-Show Rate</div>
+                <div class="subtext">Industry: 18%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">99.98% ✓</div>
+                <div class="label">System Uptime</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-title">Real-Time Reservations</div>
+                    <div class="activity-feed" id="activityFeed"></div>
+                </div>
+            </div>
+            
+            <div class="center-content">
+                <div class="card">
+                    <div class="card-title">Peak Dining Hours</div>
+                    <div class="bar-chart" id="timeChart"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Table Utilization by Seating Type</div>
+                    <table>
+                        <tr><th>Seating Type</th><th>Utilization</th><th>Status</th></tr>
+                        <tr><td>Booths</td><td>94%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Standard Tables</td><td>89%</td><td class="status-pass">✓ STRONG</td></tr>
+                        <tr><td>Patio</td><td>82%</td><td class="status-pass">✓ GOOD</td></tr>
+                        <tr><td>Bar Seating</td><td>71%</td><td class="status-pass">✓ PASS</td></tr>
+                        <tr><td>Private Rooms</td><td>58%</td><td class="status-pass">✓ PASS</td></tr>
+                    </table>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Workflow Performance</div>
+                    <table>
+                        <tr><th>Metric</th><th>Value</th><th>Target</th><th>Status</th></tr>
+                        <tr><td>Agent Decision Accuracy</td><td>98.2%</td><td>&gt;95%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Avg Qualification Time</td><td>1.4s</td><td>&lt;30s</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Waitlist Conversion Rate</td><td>74.3%</td><td>&gt;50%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Error Rate</td><td>0.2%</td><td>&lt;1%</td><td class="status-pass">✓ PASS</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="right-sidebar">
+                <div class="card">
+                    <div class="card-title">Live Operations</div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Reservations Today</span>
+                        <span class="system-health-value">72</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Confirmed Tonight</span>
+                        <span class="system-health-value">68</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Current Capacity</span>
+                        <span class="system-health-value">89%</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Current Waitlist</span>
+                        <span class="system-health-value">8</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">VIP Reservations Tonight</span>
+                        <span class="system-health-value">9</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Campaign Performance</div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Welcome Series</span>
+                        <span class="system-health-value">378 enrolled</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Birthday Rewards</span>
+                        <span class="system-health-value">127 active</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">VIP Program</span>
+                        <span class="system-health-value">227 members</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Email Open Rate</span>
+                        <span class="system-health-value green">68.4% ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store base values and counters
+        let reservationCounter = 10847;
+        let totalReservations = 3241;
+        let bookingSuccessRate = 96.7;
+        let responseTime = 0.8;
+        let reservationsToday = 72;
+        let confirmedTonight = 68;
+        let currentCapacity = 89;
+        let currentWaitlist = 8;
+        let vipReservations = 9;
+        
+        function generateActivity() {
+            const partyTypes = [
+                { party: 4, time: '7:00 PM', status: 'confirmed', type: 'vip' },
+                { party: 2, time: '6:30 PM', status: 'confirmed', type: 'regular' },
+                { party: 6, time: '8:00 PM', status: 'confirmed', type: 'regular' },
+                { party: 3, time: '7:30 PM', status: 'confirmed', type: 'vip' },
+                { party: 2, time: '5:30 PM', status: 'confirmed', type: 'regular' },
+                { party: 8, time: '6:00 PM', status: 'confirmed', type: 'regular' },
+                { party: 4, time: '7:00 PM', status: 'confirmed', type: 'vip' }
+            ];
+            
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = '';
+            
+            partyTypes.forEach((res, i) => {
+                const id = `RS${reservationCounter - i}`;
+                const now = new Date();
+                const timestamp = new Date(now - i * 90000);
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-time">${timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">${id}</div>
+                    <div>Guest: <span class="redacted">████████</span></div>
+                    <div>Party of ${res.party} @ ${res.time}</div>
+                    <div class="res-badge ${res.status}">${res.status.toUpperCase()}</div>
+                    ${res.type === 'vip' ? '<div class="res-badge vip">VIP</div>' : ''}
+                `;
+                feed.appendChild(item);
+            });
+            
+            reservationCounter++;
+            totalReservations++;
+        }
+        
+        function drawTimeChart() {
+            const times = [
+                { time: '5:00', count: 256, pct: 7.9 },
+                { time: '5:30', count: 318, pct: 9.8 },
+                { time: '6:00', count: 389, pct: 12.0 },
+                { time: '6:30', count: 421, pct: 13.0 },
+                { time: '7:00', count: 546, pct: 16.8 },
+                { time: '7:30', count: 488, pct: 15.1 },
+                { time: '8:00', count: 389, pct: 12.0 },
+                { time: '8:30', count: 291, pct: 9.0 },
+                { time: '9:00', count: 143, pct: 4.4 }
+            ];
+            
+            const chart = document.getElementById('timeChart');
+            chart.innerHTML = '';
+            times.forEach(t => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const isPeak = t.time === '7:00';
+                bar.style.height = t.pct * 11 + 'px';
+                bar.style.background = isPeak ? '#ff6b35' : '#ff9966';
+                bar.innerHTML = `<div style="font-size: 13px; margin-bottom: 4px;">${t.count}</div><div>${t.time}</div>`;
+                chart.appendChild(bar);
+            });
+        }
+        
+        function updateMetrics() {
+            // Vary live operations
+            reservationsToday = Math.max(68, Math.min(78, reservationsToday + (Math.random() > 0.5 ? 1 : -1)));
+            confirmedTonight = Math.min(reservationsToday, Math.max(64, confirmedTonight + (Math.random() > 0.6 ? 1 : -1)));
+            currentCapacity = Math.max(82, Math.min(95, currentCapacity + (Math.random() - 0.5) * 2));
+            currentWaitlist = Math.max(4, Math.min(14, currentWaitlist + (Math.random() > 0.5 ? 1 : -1)));
+            vipReservations = Math.max(6, Math.min(12, vipReservations + (Math.random() > 0.5 ? 1 : -1)));
+            
+            document.querySelectorAll('.card')[2].querySelectorAll('.system-health-value')[0].textContent = reservationsToday;
+            document.querySelectorAll('.card')[2].querySelectorAll('.system-health-value')[1].textContent = confirmedTonight;
+            document.querySelectorAll('.card')[2].querySelectorAll('.system-health-value')[2].textContent = Math.round(currentCapacity) + '%';
+            document.querySelectorAll('.card')[2].querySelectorAll('.system-health-value')[3].textContent = currentWaitlist;
+            document.querySelectorAll('.card')[2].querySelectorAll('.system-health-value')[4].textContent = vipReservations;
+            
+            // Slight variations in rates
+            bookingSuccessRate = Math.max(96.2, Math.min(97.2, bookingSuccessRate + (Math.random() - 0.5) * 0.1));
+            responseTime = Math.max(0.6, Math.min(1.0, responseTime + (Math.random() - 0.5) * 0.05));
+            
+            // Update KPI cards
+            document.querySelectorAll('.kpi-card')[0].querySelector('.value').textContent = totalReservations.toLocaleString();
+            document.querySelectorAll('.kpi-card')[1].querySelector('.value').innerHTML = bookingSuccessRate.toFixed(1) + '% <span style="color: #30d158;">✓</span>';
+            document.querySelectorAll('.kpi-card')[2].querySelector('.value').innerHTML = responseTime.toFixed(1) + 's <span style="color: #30d158;">✓</span>';
+        }
+        
+        function updateTimestamp() {
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        }
+        
+        generateActivity();
+        drawTimeChart();
+        updateMetrics();
+        updateTimestamp();
+        setInterval(() => { 
+            generateActivity(); 
+            updateMetrics();
+            updateTimestamp(); 
+        }, 5000);
+    </script>
+</body>
+</html>
