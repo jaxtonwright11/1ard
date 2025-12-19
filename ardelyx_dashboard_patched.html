@@ -340,7 +340,7 @@
         <div class="hero-banner">
             <div class="hero-metric">
                 <div class="value">142.7 hrs</div>
-                <div class="label">Staff Hours Saved (This Week)</div>
+                <div class="label">Staff Hours Saved (This Month)</div>
             </div>
             <div class="hero-metric">
                 <div class="value">$38.40</div>
@@ -401,7 +401,8 @@
                             <div class="bar-value">2,232</div>
                             <div class="bar-label">Auto-Approved<br>78.4%</div>
                         </div>
-                        <div class="bar orange" style="height: 25.2%;">
+                        <!-- provider review bar 20% taller: 25.2% * 1.2 = 30.24% -->
+                        <div class="bar orange" style="height: 30.24%;">
                             <div class="bar-value">478</div>
                             <div class="bar-label">Provider Review<br>16.8%</div>
                         </div>
@@ -428,7 +429,8 @@
                             <div class="bar-value">14%</div>
                             <div class="bar-label">Controlled</div>
                         </div>
-                        <div class="bar red" style="height: 15.2%;">
+                        <!-- expired bar 20% lower: 15.2% * 0.8 = 12.16% -->
+                        <div class="bar red" style="height: 12.16%;">
                             <div class="bar-value">9%</div>
                             <div class="bar-label">Expired</div>
                         </div>
@@ -558,8 +560,7 @@
         let waitReduction = 87.0;
 
         let lastQueueUpdate = Date.now();
-        let lastTotalUpdate = Date.now();
-        let lastHoursUpdate = Date.now();
+        let lastStrategicUpdate = Date.now();
         
         // Generate mock activity data with incrementing IDs
         function generateActivity() {
@@ -592,8 +593,7 @@
                 activityFeed.appendChild(item);
             }
             
-            // Increment counter for next batch
-            requestCounter++;
+            // NOTE: requestCounter increments moved to 30s strategic cadence
         }
         
         // Update dynamic metrics
@@ -653,23 +653,21 @@
         function tick() {
             const nowMs = Date.now();
 
-            // Total refill requests increases once every 30 seconds
-            if (nowMs - lastTotalUpdate >= 30000) {
+            // Strategic metrics (30s) - ALL in unison
+            if (nowMs - lastStrategicUpdate >= 30000) {
+                lastStrategicUpdate = nowMs;
+
                 totalRequests += 1;
-                lastTotalUpdate = nowMs;
-            }
+                requestCounter += 1;
 
-            // Hours saved increases by 0.1 once every 30 seconds
-            if (nowMs - lastHoursUpdate >= 30000) {
                 hoursSaved += 0.1;
-                lastHoursUpdate = nowMs;
+
+                // Cost savings per refill varies from $36 to $44 (ONLY every 30s)
+                costSavings = 36 + Math.random() * 8;
+
+                // Wait time reduction varies around 86.8% to 88.2% step 0.2 (ONLY every 30s)
+                waitReduction = 87.0 + (Math.round((Math.random() * 1.4 - 0.2) * 5) / 5);
             }
-
-            // Cost savings per refill varies from $36 to $44
-            costSavings = 36 + Math.random() * 8;
-
-            // Patient wait time reduction varies by decimals (around 87.x)
-            waitReduction = 87.0 + (Math.round((Math.random() * 1.4 - 0.2) * 5) / 5); // 86.8 to 88.2 step 0.2
 
             updateHero();
             generateActivity();
@@ -680,7 +678,7 @@
         // Initialize after DOM is ready
         window.addEventListener('DOMContentLoaded', () => {
             tick();
-            // Fast updates every 2 seconds
+            // Fast updates every 2 seconds (activity feed + timestamp + fast health wiggles)
             setInterval(tick, 2000);
         });
     </script>
