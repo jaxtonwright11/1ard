@@ -214,9 +214,12 @@
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
-            padding: 12px;
+            padding: 10px;
             color: white;
             font-weight: 600;
+            min-height: 70px;
+            overflow: visible;
+            line-height: 1.1;
         }
         
         .bar.orange {
@@ -228,12 +231,12 @@
         }
         
         .bar-value {
-            font-size: 18px;
-            margin-bottom: 8px;
+            font-size: 14px;
+            margin-bottom: 6px;
         }
         
         .bar-label {
-            font-size: 11px;
+            font-size: 10px;
             text-align: center;
         }
         
@@ -398,7 +401,7 @@
                             <div class="bar-value">2,232</div>
                             <div class="bar-label">Auto-Approved<br>78.4%</div>
                         </div>
-                        <div class="bar orange" style="height: 21%;">
+                        <div class="bar orange" style="height: 25.2%;">
                             <div class="bar-value">478</div>
                             <div class="bar-label">Provider Review<br>16.8%</div>
                         </div>
@@ -425,7 +428,7 @@
                             <div class="bar-value">14%</div>
                             <div class="bar-label">Controlled</div>
                         </div>
-                        <div class="bar red" style="height: 19%;">
+                        <div class="bar red" style="height: 15.2%;">
                             <div class="bar-value">9%</div>
                             <div class="bar-label">Expired</div>
                         </div>
@@ -550,6 +553,13 @@
         let totalRequests = 2847;
         let approvalRate = 78.4;
         let processingTime = 3.2;
+        let hoursSaved = 142.7;
+        let costSavings = 38.40;
+        let waitReduction = 87.0;
+
+        let lastQueueUpdate = Date.now();
+        let lastTotalUpdate = Date.now();
+        let lastHoursUpdate = Date.now();
         
         // Generate mock activity data with incrementing IDs
         function generateActivity() {
@@ -584,7 +594,6 @@
             
             // Increment counter for next batch
             requestCounter++;
-            totalRequests++;
         }
         
         // Update dynamic metrics
@@ -596,9 +605,13 @@
             apiResponseTime = 58 + Math.floor(Math.random() * 11);
             items[0].textContent = apiResponseTime + 'ms';
 
-            // Vary queue sizes
-            queueSize = Math.max(0, queueSize + (Math.random() > 0.5 ? 1 : -1));
-            reviewQueueSize = Math.max(4, Math.min(12, reviewQueueSize + (Math.random() > 0.6 ? 1 : -1)));
+            // Vary queue sizes (every 8 seconds)
+            const nowMs = Date.now();
+            if (nowMs - lastQueueUpdate >= 8000) {
+                queueSize = Math.max(0, queueSize + (Math.random() > 0.5 ? 1 : -1));
+                reviewQueueSize = Math.max(4, Math.min(12, reviewQueueSize + (Math.random() > 0.6 ? 1 : -1)));
+                lastQueueUpdate = nowMs;
+            }
             items[3].textContent = queueSize;
             items[4].textContent = reviewQueueSize + ' ⚠';
 
@@ -628,17 +641,48 @@
             });
         }
         
-        // Initialize
-        generateActivity();
-        updateMetrics();
-        updateTimestamp();
-        
-        // Refresh every 5 seconds
-        setInterval(() => {
+        // Update hero banner metrics
+        function updateHero() {
+            const vals = document.querySelectorAll('.hero-metric .value');
+            if (vals.length < 3) return;
+            vals[0].textContent = hoursSaved.toFixed(1) + ' hrs';
+            vals[1].textContent = '$' + costSavings.toFixed(2);
+            vals[2].textContent = waitReduction.toFixed(1) + '%';
+        }
+
+        function tick() {
+            const nowMs = Date.now();
+
+            // Total refill requests increases once every 30 seconds
+            if (nowMs - lastTotalUpdate >= 30000) {
+                totalRequests += 1;
+                lastTotalUpdate = nowMs;
+            }
+
+            // Hours saved increases by 0.1 once every 30 seconds
+            if (nowMs - lastHoursUpdate >= 30000) {
+                hoursSaved += 0.1;
+                lastHoursUpdate = nowMs;
+            }
+
+            // Cost savings per refill varies from $36 to $44
+            costSavings = 36 + Math.random() * 8;
+
+            // Patient wait time reduction varies by decimals (around 87.x)
+            waitReduction = 87.0 + (Math.round((Math.random() * 1.4 - 0.2) * 5) / 5); // 86.8 to 88.2 step 0.2
+
+            updateHero();
             generateActivity();
             updateMetrics();
             updateTimestamp();
-        }, 5000);
+        }
+
+        // Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            tick();
+            // Fast updates every 2 seconds
+            setInterval(tick, 2000);
+        });
     </script>
 </body>
 </html>
