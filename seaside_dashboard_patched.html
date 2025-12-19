@@ -79,6 +79,30 @@
         }
         .activity-time { color: #86868b; font-size: 11px; margin-bottom: 4px; }
         .activity-id { font-weight: 600; margin-bottom: 4px; }
+        
+        /* FIXED: Added missing activity feed styles */
+        .activity-score {
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px 0;
+        }
+        .activity-temp {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .activity-temp.hot { background: #ffe5e5; color: #d32f2f; }
+        .activity-temp.warm { background: #fff3cd; color: #856404; }
+        .activity-temp.cold { background: #e8e8e8; color: #666; }
+        .activity-agent {
+            font-size: 11px;
+            color: #86868b;
+            margin-top: 4px;
+        }
+        
         .lead-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -169,16 +193,19 @@
                 <div class="subtext">Past 6 months ↑</div>
             </div>
             <div class="kpi-card">
-                <div class="value green">81.2% ✓</div>
+                <!-- FIXED: Added missing ID -->
+                <div class="value green" id="seaside_qualRate">81.2% ✓</div>
                 <div class="label">Qualification Rate</div>
             </div>
             <div class="kpi-card">
-                <div class="value red">22.7% 🔥</div>
+                <!-- FIXED: Added missing ID -->
+                <div class="value red" id="seaside_hotLeadRate">22.7% 🔥</div>
                 <div class="label">Hot Leads Identified</div>
                 <div class="subtext">Score 80+</div>
             </div>
             <div class="kpi-card">
-                <div class="value green">3.8 min ✓</div>
+                <!-- FIXED: Added missing ID -->
+                <div class="value green" id="seaside_avgCallDur">3.8 min ✓</div>
                 <div class="label">Avg Call Duration</div>
             </div>
             <div class="kpi-card">
@@ -268,36 +295,25 @@
     
     <script>
       // --- Seaside Realty - Live Demo Simulation ---
-      // Cadence model:
-      //  - Fast tick (2s): timestamp + "alive" fluctuations
-      //  - Queue tick (8s): queues + agent workload
-      //  - Totals tick (30s): monotonic totals + hero monthly savings
-
-      // Base values / counters
       let leadCounter = 10847;
       let totalCalls = 1847;
 
-      // KPI ranges (bounded)
-      let qualificationRate = 81.2;   // 80.5 - 82.0
-      let hotLeadRate = 22.7;         // 22.0 - 23.5
-      let avgCallDuration = 3.8;      // 3.5 - 4.2
+      let qualificationRate = 81.2;
+      let hotLeadRate = 22.7;
+      let avgCallDuration = 3.8;
 
-      // System health / queues
-      let apiResponseTime = 94;       // 88 - 102
-      let activeCalls = 2;            // 0 - 4
-      let hotLeadsWaiting = 5;        // 2 - 8
+      let apiResponseTime = 94;
+      let activeCalls = 2;
+      let hotLeadsWaiting = 5;
 
-      // Agent workload (bounded)
-      let michaelLeads = 12;          // 8 - 16
-      let sarahLeads = 9;             // 6 - 14
-      let davidLeads = 11;            // 8 - 15
+      let michaelLeads = 12;
+      let sarahLeads = 9;
+      let davidLeads = 11;
 
-      // Hero metrics
-      let realtorHoursSaved = 87.4;   // increases slowly
-      let costPerQualifiedLead = 12.30; // fluctuate
-      let speedToHotLeadMins = 3.8;   // fluctuate
+      let realtorHoursSaved = 87.4;
+      let costPerQualifiedLead = 12.30;
+      let speedToHotLeadMins = 3.8;
 
-      // Helpers
       function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
       function jitter(x, delta) { return x + (Math.random() - 0.5) * delta; }
 
@@ -352,7 +368,6 @@
         const agents = ['Michael Reynolds', 'Sarah Chen', 'David Martinez'];
         const types = ['Buyer Inquiry', 'Seller Inquiry', 'Investment Property', 'Relocation', 'First-Time Buyer'];
         const cities = ['Ventura', 'Oxnard', 'Camarillo', 'Thousand Oaks', 'Santa Barbara', 'Malibu'];
-        const temps = ['HOT', 'WARM', 'COLD'];
 
         leadCounter += 1;
 
@@ -360,7 +375,6 @@
         const type = types[Math.floor(Math.random() * types.length)];
         const city = cities[Math.floor(Math.random() * cities.length)];
 
-        // skew toward warm/hot for demo
         const r = Math.random();
         const temp = r < 0.28 ? 'HOT' : (r < 0.70 ? 'WARM' : 'COLD');
         const score = temp === 'HOT' ? (85 + Math.floor(Math.random() * 16))
@@ -381,8 +395,6 @@
         `;
 
         feed.insertBefore(item, feed.firstChild);
-
-        // cap feed length
         while (feed.children.length > 10) feed.removeChild(feed.lastChild);
       }
 
@@ -401,12 +413,11 @@
         ];
 
         chart.innerHTML = '';
-
         data.forEach(d => {
           const bar = document.createElement('div');
           bar.className = 'bar';
-          const px = d.pct * 10;              // original scale
-          const h = Math.max(px, 58);         // ensure labels never clip
+          const px = d.pct * 10;
+          const h = Math.max(px, 58);
           bar.style.height = h + 'px';
           bar.style.background = d.color;
 
@@ -423,29 +434,26 @@
         });
       }
 
-      // --- Tick functions (Ardelyx-style cadence) ---
       function tickFast() {
         updateTimestamp();
 
-        // Alive fluctuations
-        apiResponseTime = 88 + Math.floor(Math.random() * 15); // 88-102
+        // FIXED: Tightened cost variance (was 10.80-14.60, now 11.80-13.80)
+        apiResponseTime = 88 + Math.floor(Math.random() * 15);
         qualificationRate = clamp(jitter(qualificationRate, 0.25), 80.5, 82.0);
         hotLeadRate = clamp(jitter(hotLeadRate, 0.18), 22.0, 23.5);
         avgCallDuration = clamp(jitter(avgCallDuration, 0.18), 3.5, 4.2);
         speedToHotLeadMins = clamp(jitter(speedToHotLeadMins, 0.20), 3.4, 4.3);
-        costPerQualifiedLead = clamp(jitter(costPerQualifiedLead, 0.18), 10.80, 14.60);
+        costPerQualifiedLead = clamp(jitter(costPerQualifiedLead, 0.12), 11.80, 13.80);
 
         renderSystemHealth();
         renderKPIs();
         renderHero();
-
-        // activity feels "alive" - keep at 2s
         generateActivity();
       }
 
       function tickQueues() {
-        activeCalls = Math.floor(Math.random() * 5);         // 0-4
-        hotLeadsWaiting = 2 + Math.floor(Math.random() * 7); // 2-8
+        activeCalls = Math.floor(Math.random() * 5);
+        hotLeadsWaiting = 2 + Math.floor(Math.random() * 7);
 
         michaelLeads = clamp(michaelLeads + (Math.random() > 0.5 ? 1 : -1), 8, 16);
         sarahLeads   = clamp(sarahLeads   + (Math.random() > 0.5 ? 1 : -1), 6, 14);
@@ -456,14 +464,13 @@
       }
 
       function tickTotals() {
-        totalCalls += 1;                // monotonic
-        realtorHoursSaved += 0.1;       // slow monotonic
+        totalCalls += 1;
+        realtorHoursSaved += 0.1;
         renderKPIs();
         renderHero();
       }
 
       window.addEventListener('DOMContentLoaded', () => {
-        // initial render
         drawScoreChart();
         renderHero();
         renderKPIs();
@@ -471,7 +478,6 @@
         renderAgentWorkload();
         updateTimestamp();
 
-        // start loops
         setInterval(tickFast, 2000);
         setInterval(tickQueues, 8000);
         setInterval(tickTotals, 30000);
