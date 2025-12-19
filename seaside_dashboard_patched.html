@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seaside Realty Lead Intelligence Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            padding: 20px;
+        }
+        .dashboard { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .header .subtitle { font-size: 14px; color: #86868b; }
+        .header .last-updated { font-size: 12px; color: #86868b; margin-top: 12px; }
+        .hero-banner {
+            background: linear-gradient(135deg, #0071e3 0%, #0077ed 100%);
+            padding: 20px 32px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            color: white;
+        }
+        .hero-metric { text-align: center; }
+        .hero-metric .value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .hero-metric .label { font-size: 13px; opacity: 0.9; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .kpi-card .value { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .kpi-card .value.green { color: #30d158; }
+        .kpi-card .value.red { color: #ff3b30; }
+        .kpi-card .label { font-size: 13px; color: #86868b; }
+        .kpi-card .subtext { font-size: 11px; color: #86868b; }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e5e7;
+        }
+        .activity-feed { max-height: 600px; overflow-y: auto; }
+        .activity-item {
+            padding: 12px;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 12px;
+        }
+        .activity-time { color: #86868b; font-size: 11px; margin-bottom: 4px; }
+        .activity-id { font-weight: 600; margin-bottom: 4px; }
+        .lead-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .lead-badge.hot { background: #ffe5e5; color: #d32f2f; }
+        .lead-badge.warm { background: #fff3cd; color: #856404; }
+        .lead-badge.cold { background: #e8e8e8; color: #666; }
+        .bar-chart {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            height: 250px;
+            align-items: flex-end;
+        }
+        .bar {
+            flex: 1;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .system-health-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 13px;
+        }
+        .system-health-label { color: #86868b; }
+        .system-health-value { font-weight: 600; }
+        .system-health-value.green { color: #30d158; }
+        .redacted {
+            background: #000;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f5f5f7;
+            font-size: 12px;
+            font-weight: 600;
+            color: #86868b;
+        }
+        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f5f5f7; }
+        .status-pass { color: #30d158; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Seaside Realty Lead Intelligence Dashboard</h1>
+            <div class="subtitle">AI-Powered Call Handling & Lead Qualification System</div>
+            <div class="last-updated">Last Updated: <span id="lastUpdated"></span></div>
+        </div>
+        
+        <div class="hero-banner">
+            <div class="hero-metric">
+                <div class="value" id="seaside_hoursSaved">87.4 hours</div>
+                <div class="label">Realtor Time Saved (This Month)</div>
+            </div>
+            <div class="hero-metric">
+                <div class="value" id="seaside_costPerLead">$12.30</div>
+                <div class="label">Cost Per Qualified Lead</div>
+            </div>
+            <div class="hero-metric">
+                <div class="value" id="seaside_speedResponse">3.8 minutes</div>
+                <div class="label">Speed to Hot Lead Response</div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="value" id="seaside_totalCalls">1,847</div>
+                <div class="label">Total Calls Handled</div>
+                <div class="subtext">Past 6 months ↑</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">81.2% ✓</div>
+                <div class="label">Qualification Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value red">22.7% 🔥</div>
+                <div class="label">Hot Leads Identified</div>
+                <div class="subtext">Score 80+</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">3.8 min ✓</div>
+                <div class="label">Avg Call Duration</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">71.4% ✓</div>
+                <div class="label">Email Open Rate</div>
+                <div class="subtext">Industry: 22%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value green">99.94% ✓</div>
+                <div class="label">System Uptime</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-title">Real-Time Lead Activity</div>
+                    <div class="activity-feed" id="activityFeed"></div>
+                </div>
+            </div>
+            
+            <div class="center-content">
+                <div class="card">
+                    <div class="card-title">Lead Score Distribution</div>
+                    <div class="bar-chart" id="scoreChart"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Conversion Funnel</div>
+                    <table>
+                        <tr><th>Stage</th><th>Count</th><th>Conversion</th><th>Status</th></tr>
+                        <tr><td>Total Calls Received</td><td>1,847</td><td>100%</td><td>—</td></tr>
+                        <tr><td>Qualified Leads</td><td>1,499</td><td>81.2%</td><td class="status-pass">✓ PASS</td></tr>
+                        <tr><td>Hot Leads (80-100)</td><td>420</td><td>22.7%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Showings Scheduled</td><td>168</td><td>40.0%</td><td class="status-pass">✓ STRONG</td></tr>
+                        <tr><td>Showings Attended</td><td>147</td><td>87.5%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                        <tr><td>Offers Made</td><td>31</td><td>21.1%</td><td class="status-pass">✓ STRONG</td></tr>
+                        <tr><td>Deals Closed</td><td>18</td><td>58.1%</td><td class="status-pass">✓ EXCELLENT</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="right-sidebar">
+                <div class="card">
+                    <div class="card-title">System Health</div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">API Response Time</span>
+                        <span class="system-health-value" id="seaside_apiMs">94ms</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Active Calls</span>
+                        <span class="system-health-value" id="seaside_activeCalls">2</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Hot Leads - Awaiting Callback</span>
+                        <span class="system-health-value" id="seaside_hotWaiting">5</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Email Delivery Rate</span>
+                        <span class="system-health-value green">99.4% ✓</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">SMS Delivery Rate</span>
+                        <span class="system-health-value green">98.7% ✓</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Agent Workload</div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Michael Reynolds</span>
+                        <span class="system-health-value" id="seaside_michaelLeads">12 leads</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">Sarah Chen</span>
+                        <span class="system-health-value" id="seaside_sarahLeads">9 leads</span>
+                    </div>
+                    <div class="system-health-item">
+                        <span class="system-health-label">David Martinez</span>
+                        <span class="system-health-value" id="seaside_davidLeads">11 leads</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>
+      // --- Seaside Realty - Live Demo Simulation ---
+      // Cadence model:
+      //  - Fast tick (2s): timestamp + "alive" fluctuations
+      //  - Queue tick (8s): queues + agent workload
+      //  - Totals tick (30s): monotonic totals + hero monthly savings
+
+      // Base values / counters
+      let leadCounter = 10847;
+      let totalCalls = 1847;
+
+      // KPI ranges (bounded)
+      let qualificationRate = 81.2;   // 80.5 - 82.0
+      let hotLeadRate = 22.7;         // 22.0 - 23.5
+      let avgCallDuration = 3.8;      // 3.5 - 4.2
+
+      // System health / queues
+      let apiResponseTime = 94;       // 88 - 102
+      let activeCalls = 2;            // 0 - 4
+      let hotLeadsWaiting = 5;        // 2 - 8
+
+      // Agent workload (bounded)
+      let michaelLeads = 12;          // 8 - 16
+      let sarahLeads = 9;             // 6 - 14
+      let davidLeads = 11;            // 8 - 15
+
+      // Hero metrics
+      let realtorHoursSaved = 87.4;   // increases slowly
+      let costPerQualifiedLead = 12.30; // fluctuate
+      let speedToHotLeadMins = 3.8;   // fluctuate
+
+      // Helpers
+      function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+      function jitter(x, delta) { return x + (Math.random() - 0.5) * delta; }
+
+      function updateTimestamp() {
+        const el = document.getElementById('lastUpdated');
+        if (!el) return;
+        el.textContent = new Date().toLocaleString();
+      }
+
+      function renderHero() {
+        const a = document.getElementById('seaside_hoursSaved');
+        const b = document.getElementById('seaside_costPerLead');
+        const c = document.getElementById('seaside_speedResponse');
+        if (a) a.textContent = realtorHoursSaved.toFixed(1) + ' hours';
+        if (b) b.textContent = '$' + costPerQualifiedLead.toFixed(2);
+        if (c) c.textContent = speedToHotLeadMins.toFixed(1) + ' minutes';
+      }
+
+      function renderKPIs() {
+        const t = document.getElementById('seaside_totalCalls');
+        const q = document.getElementById('seaside_qualRate');
+        const h = document.getElementById('seaside_hotLeadRate');
+        const d = document.getElementById('seaside_avgCallDur');
+        if (t) t.textContent = totalCalls.toLocaleString();
+        if (q) q.innerHTML = qualificationRate.toFixed(1) + '% <span style="color:#30d158;">✓</span>';
+        if (h) h.innerHTML = hotLeadRate.toFixed(1) + '% <span style="color:#ff3b30;">🔥</span>';
+        if (d) d.innerHTML = avgCallDuration.toFixed(1) + ' min <span style="color:#30d158;">✓</span>';
+      }
+
+      function renderSystemHealth() {
+        const api = document.getElementById('seaside_apiMs');
+        const act = document.getElementById('seaside_activeCalls');
+        const hot = document.getElementById('seaside_hotWaiting');
+        if (api) api.textContent = apiResponseTime + 'ms';
+        if (act) act.textContent = activeCalls;
+        if (hot) hot.textContent = hotLeadsWaiting;
+      }
+
+      function renderAgentWorkload() {
+        const m = document.getElementById('seaside_michaelLeads');
+        const s = document.getElementById('seaside_sarahLeads');
+        const d = document.getElementById('seaside_davidLeads');
+        if (m) m.textContent = michaelLeads + ' leads';
+        if (s) s.textContent = sarahLeads + ' leads';
+        if (d) d.textContent = davidLeads + ' leads';
+      }
+
+      function generateActivity() {
+        const feed = document.getElementById('activityFeed');
+        if (!feed) return;
+
+        const agents = ['Michael Reynolds', 'Sarah Chen', 'David Martinez'];
+        const types = ['Buyer Inquiry', 'Seller Inquiry', 'Investment Property', 'Relocation', 'First-Time Buyer'];
+        const cities = ['Ventura', 'Oxnard', 'Camarillo', 'Thousand Oaks', 'Santa Barbara', 'Malibu'];
+        const temps = ['HOT', 'WARM', 'COLD'];
+
+        leadCounter += 1;
+
+        const agent = agents[Math.floor(Math.random() * agents.length)];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const city = cities[Math.floor(Math.random() * cities.length)];
+
+        // skew toward warm/hot for demo
+        const r = Math.random();
+        const temp = r < 0.28 ? 'HOT' : (r < 0.70 ? 'WARM' : 'COLD');
+        const score = temp === 'HOT' ? (85 + Math.floor(Math.random() * 16))
+                    : temp === 'WARM' ? (60 + Math.floor(Math.random() * 25))
+                    : (35 + Math.floor(Math.random() * 25));
+
+        const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+          <div class="activity-time">${time}</div>
+          <div class="activity-id">LD${leadCounter}</div>
+          <div>${type} - ${city}</div>
+          <div class="activity-score">Score: ${score}</div>
+          <div class="activity-temp ${temp.toLowerCase()}">${temp}</div>
+          <div class="activity-agent">${agent}</div>
+        `;
+
+        feed.insertBefore(item, feed.firstChild);
+
+        // cap feed length
+        while (feed.children.length > 10) feed.removeChild(feed.lastChild);
+      }
+
+      function drawScoreChart() {
+        const chart = document.getElementById('scoreChart');
+        if (!chart) return;
+
+        const data = [
+          { range: '90-100', count: 222, pct: 12.0, color: '#d32f2f' },
+          { range: '80-89',  count: 198, pct: 10.7, color: '#ff5722' },
+          { range: '70-79',  count: 387, pct: 21.0, color: '#ff9800' },
+          { range: '60-69',  count: 406, pct: 22.0, color: '#ffc107' },
+          { range: '50-59',  count: 259, pct: 14.0, color: '#ffeb3b' },
+          { range: '40-49',  count: 185, pct: 10.0, color: '#e0e0e0' },
+          { range: '0-39',   count: 190, pct: 10.3, color: '#bdbdbd' }
+        ];
+
+        chart.innerHTML = '';
+
+        data.forEach(d => {
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          const px = d.pct * 10;              // original scale
+          const h = Math.max(px, 58);         // ensure labels never clip
+          bar.style.height = h + 'px';
+          bar.style.background = d.color;
+
+          const compact = h < 70;
+          const valueSize = compact ? 12 : 14;
+          const rangeSize = compact ? 9 : 10;
+
+          bar.innerHTML = `
+            <div style="font-size:${valueSize}px; margin-bottom:6px;">${d.pct.toFixed(1)}%</div>
+            <div style="font-size:${valueSize}px; font-weight:700; margin-bottom:6px;">${d.count}</div>
+            <div style="font-size:${rangeSize}px;">${d.range}</div>
+          `;
+          chart.appendChild(bar);
+        });
+      }
+
+      // --- Tick functions (Ardelyx-style cadence) ---
+      function tickFast() {
+        updateTimestamp();
+
+        // Alive fluctuations
+        apiResponseTime = 88 + Math.floor(Math.random() * 15); // 88-102
+        qualificationRate = clamp(jitter(qualificationRate, 0.25), 80.5, 82.0);
+        hotLeadRate = clamp(jitter(hotLeadRate, 0.18), 22.0, 23.5);
+        avgCallDuration = clamp(jitter(avgCallDuration, 0.18), 3.5, 4.2);
+        speedToHotLeadMins = clamp(jitter(speedToHotLeadMins, 0.20), 3.4, 4.3);
+        costPerQualifiedLead = clamp(jitter(costPerQualifiedLead, 0.18), 10.80, 14.60);
+
+        renderSystemHealth();
+        renderKPIs();
+        renderHero();
+
+        // activity feels "alive" - keep at 2s
+        generateActivity();
+      }
+
+      function tickQueues() {
+        activeCalls = Math.floor(Math.random() * 5);         // 0-4
+        hotLeadsWaiting = 2 + Math.floor(Math.random() * 7); // 2-8
+
+        michaelLeads = clamp(michaelLeads + (Math.random() > 0.5 ? 1 : -1), 8, 16);
+        sarahLeads   = clamp(sarahLeads   + (Math.random() > 0.5 ? 1 : -1), 6, 14);
+        davidLeads   = clamp(davidLeads   + (Math.random() > 0.5 ? 1 : -1), 8, 15);
+
+        renderSystemHealth();
+        renderAgentWorkload();
+      }
+
+      function tickTotals() {
+        totalCalls += 1;                // monotonic
+        realtorHoursSaved += 0.1;       // slow monotonic
+        renderKPIs();
+        renderHero();
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        // initial render
+        drawScoreChart();
+        renderHero();
+        renderKPIs();
+        renderSystemHealth();
+        renderAgentWorkload();
+        updateTimestamp();
+
+        // start loops
+        setInterval(tickFast, 2000);
+        setInterval(tickQueues, 8000);
+        setInterval(tickTotals, 30000);
+      });
+    </script>
+
+</body>
+</html>
